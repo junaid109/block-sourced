@@ -47,20 +47,18 @@ contract CrowdFunding {
     }
     
 
-    function donateToCampaign(uint256 _id) public payable {
-        uint256 amount = msg.value;
-        Campaign storage campaign = campaigns[_id];
-        require(campaign.deadline > block.timestamp, "Deadline has passed");
+  function donateToCampaign(uint256 _id) public payable {
+        require(campaigns[_id].deadline > block.timestamp, "Deadline has passed");
         require(msg.value > 0, "Donation must be greater than 0");
 
-        campaign.amountCollected += msg.value;
-        campaign.donators.push(msg.sender);
-        campaign.donations.push(amount);
+        campaigns[_id].amountCollected += msg.value;
+        campaigns[_id].donators.push(msg.sender);
+        campaigns[_id].donations.push(msg.value);
         
-        (bool sent,) = payable(campaign.owner).call{value: msg.value}("");
+        (bool sent,) = payable(campaigns[_id].owner).call{value: msg.value}("");
 
         if(sent) {
-            campaign.amountCollected = campaign.amountCollected + amount;
+            campaigns[_id].amountCollected += msg.value;
         }
     }
 
@@ -69,7 +67,11 @@ contract CrowdFunding {
     }
 
     function getCampaign() public view returns(Campaign[] memory) {
+        // require that there are more than 0 campaigns
+        require(numCampaigns > 0, "No Campaigns Available");
+        // create a new array to store the campaigns
         Campaign[] memory campaign = new Campaign[](numCampaigns);
+        // loop through all the campaigns and return the campaign
         for(uint256 i = 0; i < numCampaigns; i++) {
             Campaign storage c = campaigns[i];
             campaign[i] = c;
